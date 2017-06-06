@@ -8,23 +8,21 @@ const Heading = str => (
         <h1>Now Viewing {str}</h1>
 );
 
-const ProfileLink = user => (
-        <a href={`/users/${user.id}`}>user.name</a>
+const Link = user => (
+        <a href={`/users/${user.id}`}>{user.name}</a>
 );
 
-// Functional Component
-/*
-contramap returns partially applied component. Flat component with fold
-concat is basically a bifold
-*/
-const Comp = g =>
+// ComponentFactory :: Component a => a -> b
+const ComponentFactory = comp =>
     ({
-        fold: g,
-        concat: other => Comp(x => <div>{g(x)} {other.fold(x)}</div>),
-        contramap: f => Comp(x => g(f(x)))
+        fold: comp, // launch function chain
+        concat: other => // bifold two Components
+            ComponentFactory(x => <div>{comp(x)} {other.fold(x)}</div>),
+        contramap: statef => // passing state to component
+            ComponentFactory(x => comp(statef(x)))
     });
 
-
+// Reducer :: (a,b) -> a
 const Reducer = g =>
     ({
         fold: g,
@@ -34,19 +32,29 @@ const Reducer = g =>
             Reducer((acc, x) => f(g(acc, x))),
         concat: o =>
             Reducer((acc, x) => o.fold(g(acc, x), x))
-    })
+    });
 
-const CurrentPage = Comp(Heading).contramap(s => s.pageName),
-      Link = Comp(ProfileLink).contramap(s => s.currentUser);
+const r = Reducer((acc, x) => acc.concat(x))
+    .contramap(x => `The number is ${x}`)
+    .map(x => x + '! ')
 
-const CurrentView = CurrentPage.concat(Link);
+console.log([1,2,3].reduce(r.fold, ''));
+
+
+const state = {
+    pageName: 'Home',
+    currentUser: { id: 2, name: 'ja0nz' }
+};
+
+const HeadingPageName = ComponentFactory(Heading).contramap(s => s.pageName),
+      LinkCurrentUser = ComponentFactory(Link).contramap(s => s.currentUser);
+
+// Merge two components
+const CurrentView = HeadingPageName.concat(LinkCurrentUser);
 
 
 // Fold view with state
-const App = CurrentView.fold({
-    pageName: 'Home',
-    currentUser: { id: 2, name: 'ja0nz' }
-});
+const App = CurrentView.fold(state);
 
 export default class extends Component {
     render() {
