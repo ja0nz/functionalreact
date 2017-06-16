@@ -10,21 +10,40 @@ Link = user => (
         <a href={`/users/${user.id}`}>{user.name}</a>
 );
 
-// ComponentFactory :: Component a => a -> b
+console.log('Link', Link)
+const functionalhandler = (props) => {
+
+    let textInput = null;
+
+    const handleClick = () => console.log(textInput.value);
+
+    return (
+        <div>
+            <input
+                defaultValue="Bob"
+                type="text"
+                ref={(self) => {console.log(self); textInput = self; }} />
+            <input
+                type="button"
+                value="Alert me"
+                onClick={handleClick}
+            />
+        </div>
+    );
+};
+
+
+// ComponentFactory ::  a -> JSX
 const ComponentFactory = comp =>
     ({
         fold: comp, // bound component
         concat: other => // bifold two Components
             ComponentFactory(x => <div>{comp(x)} {other.fold(x)}</div>),
-        contramap: statef => // passing state to component
-            ComponentFactory(x => comp(statef(x)))
+        contramap: props => // passing state to component
+            ComponentFactory(x => comp(props(x)))
     });
 
-
-const state = {
-    pageName: 'Home',
-    currentUser: { id: 2, name: 'ja0nz' }
-};
+// Heading(getPagename(Object))
 
 const HeadingBound = ComponentFactory(Heading).contramap(s => s.pageName),
       LinkBound = ComponentFactory(Link).contramap(s => s.currentUser);
@@ -32,21 +51,27 @@ const HeadingBound = ComponentFactory(Heading).contramap(s => s.pageName),
 // Merge two components
 const CurrentView = HeadingBound.concat(LinkBound);
 
+const state = {
+    pageName: 'Home',
+    currentUser: { id: 2, name: 'ja0nz' }
+};
 // Fold view with state
 const HeadingLinkDiv = CurrentView.fold(state);
+console.log(HeadingLinkDiv);
 
 export default class extends Component {
     render() {
         return (
             <div className="App">
-                {HeadingLinkDiv} 
+                {HeadingLinkDiv}
+                {functionalhandler()}
             </div>
         );
     }
 }
 
 /* ----------------------------------------------- */
-// Playing wit Reducers 
+// Playing wit Reducers */
 
 // Reducer :: (a,b) -> a
 const Reducer = g =>
@@ -64,7 +89,8 @@ const r = Reducer((acc, x) => acc.concat(x)) // Concat reducer, concat = fold
     .contramap(x => `The number is ${x}`) // apply on each element
     .map(x => x + '! ') // reduce + map
 
-console.log([1,2,3].reduce(r.fold, ''));
+/* console.log([1,2,3].reduce(r.fold, ''));*/
+// The number is 1! ...
 
 const appReducer = Reducer((state, action) => {
     switch (action.type) {

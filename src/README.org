@@ -1,0 +1,13 @@
+* React in Fantasyland
+
+This document is all about static types in Fantasyland and the combination with React. Why should it be useful?! Using types and understanding the patterns behind it gives you, the developer, more power to abstract over your code. Give it a try
+
+If you struggle with the mental concepts behind the [[https://github.com/fantasyland/fantasy-land][Fantasyland Specs]] I can highly recommend you the tutorial from [[http://tomharding.me][Tom Harding]] covering this topic. Great read!
+
+
+
+
+#+BEGIN_SRC javascript
+console.log("hello")
+
+#+END_SRC
