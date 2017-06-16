@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import daggy from 'daggy';
 import './App.css';
 
 
@@ -10,38 +11,21 @@ Link = user => (
         <a href={`/users/${user.id}`}>{user.name}</a>
 );
 
-console.log('Link', Link)
-const functionalhandler = (props) => {
-
-    let textInput = null;
-
-    const handleClick = () => console.log(textInput.value);
-
-    return (
-        <div>
-            <input
-                defaultValue="Bob"
-                type="text"
-                ref={(self) => {console.log(self); textInput = self; }} />
-            <input
-                type="button"
-                value="Alert me"
-                onClick={handleClick}
-            />
-        </div>
-    );
-};
-
+const ComponentFactory = daggy.tagged("ComponentFactory", ['comp']);
+ComponentFactory.prototype.fold = function (state) {return this.comp(state)};
+ComponentFactory.prototype.concat = function (other) {return ComponentFactory(x => <div>{this.comp(x)} {other.fold(x)}</div>)};
+ComponentFactory.prototype.contramap = function(props) {return ComponentFactory(x => this.comp(props(x))) };
 
 // ComponentFactory ::  a -> JSX
-const ComponentFactory = comp =>
-    ({
-        fold: comp, // bound component
-        concat: other => // bifold two Components
-            ComponentFactory(x => <div>{comp(x)} {other.fold(x)}</div>),
-        contramap: props => // passing state to component
-            ComponentFactory(x => comp(props(x)))
-    });
+/* const ComponentFactory = comp =>
+ *     ({
+ *         fold: comp, // bound component
+ *         concat: other => // bifold two Components
+ *             ComponentFactory(x => <div>{comp(x)} {other.fold(x)}</div>),
+ *         contramap: props => // passing state to component
+ *             ComponentFactory(x => comp(props(x)))
+ *     });
+ * console.log(ComponentFactory)*/
 
 // Heading(getPagename(Object))
 
@@ -57,14 +41,12 @@ const state = {
 };
 // Fold view with state
 const HeadingLinkDiv = CurrentView.fold(state);
-console.log(HeadingLinkDiv);
 
 export default class extends Component {
     render() {
         return (
             <div className="App">
                 {HeadingLinkDiv}
-                {functionalhandler()}
             </div>
         );
     }
@@ -124,7 +106,6 @@ const stateTodo = {visibilityFilter: 'complete',
                    type: 'set_visibility_filter'},
 statefulApp = todoApp.fold(stateTodo);
 
-console.log(statefulApp);
 
 /* ------------------------------ */
 // Higher order Components. Concat with Components

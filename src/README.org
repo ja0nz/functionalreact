@@ -4,10 +4,26 @@ This document is all about static types in Fantasyland and the combination with 
 
 If you struggle with the mental concepts behind the [[https://github.com/fantasyland/fantasy-land][Fantasyland Specs]] I can highly recommend you the tutorial from [[http://tomharding.me][Tom Harding]] covering this topic. Great read!
 
+In order to enhance a simple component towards an data entity we need to wrap the component in a box aka object. You may decide to write the Object directly which is totally fine. But enhancing the object will leave you monkey-patching over and over again. Therefore I prefer to use a little helper library [[https://github.com/fantasyland/daggy][Daggy]] to enhance the prototype.
 
+Credits to [[https://twitter.com/drboolean][Brian Lonsdorf]] with his wonderful [[https://www.youtube.com/watch?v=SfWR3dKnFIo][inspirations]].
 
+** Prelude - anatomy of a simple leaf component
+
+ #+BEGIN_SRC javascript
+const Heading = str => ( 
+        <h1>Now Viewing {str}</h1>
+);
+ #+END_SRC
+
+A simple, non-classed component will take a some input parameters and returns on opaque React object. It may sound trivial but its this opaqueness, that makes it hard to refine, concat or transform a component. Libraries like [[https://github.com/acdlite/recompose][Recompose]] found a way to hook into React components and let you construct and deconstruct them in any way. But instead of relying on solely on utils I would invite you to explore the possible implementations based on principles of abstract algebra. Enjoy the mind-bend!:)
+
+** Daggy around
 
 #+BEGIN_SRC javascript
-console.log("hello")
-
+const fantasyComp = daggy.tagged("ComponentFactory", ['component']);
 #+END_SRC
+
+
+
+
