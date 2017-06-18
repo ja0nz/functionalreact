@@ -11,26 +11,34 @@ Link = user => (
         <a href={`/users/${user.id}`}>{user.name}</a>
 );
 
-const ComponentFactory = daggy.tagged("ComponentFactory", ['comp']);
-ComponentFactory.prototype.fold = function (state) {return this.comp(state)};
-ComponentFactory.prototype.concat = function (other) {return ComponentFactory(x => <div>{this.comp(x)} {other.fold(x)}</div>)};
-ComponentFactory.prototype.contramap = function(props) {return ComponentFactory(x => this.comp(props(x))) };
 
-// ComponentFactory ::  a -> JSX
-/* const ComponentFactory = comp =>
+
+
+const FComponent = daggy.tagged("FComponent", ['x']);
+
+FComponent.prototype.fold = function (state) {return this.x(state)};
+
+FComponent.prototype.map = function (f) {return FComponent(x => f(this.fold(x)))}
+
+FComponent.prototype.concat = function (other) {return FComponent(x => <div>{this.fold(x)} {other.fold(x)}</div>)};
+
+FComponent.prototype.contramap = function(props) {return FComponent(x => this.fold(props(x))) };
+
+// FComponent ::  a -> JSX
+/* const FComponent = comp =>
  *     ({
  *         fold: comp, // bound component
  *         concat: other => // bifold two Components
- *             ComponentFactory(x => <div>{comp(x)} {other.fold(x)}</div>),
+ *             FComponent(x => <div>{comp(x)} {other.fold(x)}</div>),
  *         contramap: props => // passing state to component
- *             ComponentFactory(x => comp(props(x)))
+ *             FComponent(x => comp(props(x)))
  *     });
- * console.log(ComponentFactory)*/
+ * console.log(FComponent)*/
 
 // Heading(getPagename(Object))
 
-const HeadingBound = ComponentFactory(Heading).contramap(s => s.pageName),
-      LinkBound = ComponentFactory(Link).contramap(s => s.currentUser);
+const HeadingBound = FComponent(Heading).contramap(s => s.pageName),
+      LinkBound = FComponent(Link).contramap(s => s.currentUser);
 
 // Merge two components
 const CurrentView = HeadingBound.concat(LinkBound);
