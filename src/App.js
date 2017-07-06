@@ -12,17 +12,16 @@ Link = user => (
 );
 
 
+const fComponent = daggy.tagged("fComponent", ['x']);
+const factory = fComponent.prototype;
 
+factory.fold = function (state) {return this.x(state)};
 
-const FComponent = daggy.tagged("FComponent", ['x']);
+factory.map = function (f) {return fComponent(x => f(this.fold(x)))}
 
-FComponent.prototype.fold = function (state) {return this.x(state)};
+factory.concat = function (other) {return fComponent(x => <div>{this.fold(x)} {other.fold(x)}</div>)};
 
-FComponent.prototype.map = function (f) {return FComponent(x => f(this.fold(x)))}
-
-FComponent.prototype.concat = function (other) {return FComponent(x => <div>{this.fold(x)} {other.fold(x)}</div>)};
-
-FComponent.prototype.contramap = function(props) {return FComponent(x => this.fold(props(x))) };
+factory.contramap = function(props) {return fComponent(x => this.fold(props(x))) };
 
 // FComponent ::  a -> JSX
 /* const FComponent = comp =>
@@ -37,8 +36,8 @@ FComponent.prototype.contramap = function(props) {return FComponent(x => this.fo
 
 // Heading(getPagename(Object))
 
-const HeadingBound = FComponent(Heading).contramap(s => s.pageName),
-      LinkBound = FComponent(Link).contramap(s => s.currentUser);
+const HeadingBound = fComponent(Heading).contramap(s => s.pageName),
+      LinkBound = fComponent(Link).contramap(s => s.currentUser);
 
 // Merge two components
 const CurrentView = HeadingBound.concat(LinkBound);
