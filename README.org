@@ -1,0 +1,110 @@
+/*** work in progress ***/
+
+* React in Fantasyland
+
+** Climbing the ladder of abstraction
+
+ This document is all about static types in Fantasyland and the combination with React. Why should it be useful?! Using types and understanding the patterns behind it gives you, the developer, more power to abstract over your code and leads to greater composition.
+
+ If you struggle with the mental concepts behind the [[https://github.com/fantasyland/fantasy-land][Fantasyland Specs]] I highly recommend the tutorial from [[http://tomharding.me][Tom Harding]] covering this topic. Great read!
+
+ In order to enhance a simple component towards an data entity we need to wrap the component in a box aka object. To avoid monkey-patching I will rely on a little helper library [[https://github.com/fantasyland/daggy][Daggy]] and enhance the prototype gradually.
+
+ Credits to [[https://twitter.com/drboolean][Brian Lonsdorf]] with his wonderful [[https://www.youtube.com/watch?v=SfWR3dKnFIo][inspirations]].
+
+** Prelude
+
+ #+BEGIN_SRC javascript
+              --------------------------
+    IN        |                        |     JSX OUT
+------------> |  Functional component  | --------------->
+              |                        |
+              --------------------------
+ #+END_SRC
+
+A simple, non-classed component will take a some input parameters and returns an opaque React object which makes it hard to refine, concat or transform a component. Libraries like [[https://github.com/acdlite/recompose][Recompose]] found a way to hook into React components and let you construct and deconstruct them in any way. But instead of relying on solely on utils I would invite you to explore the possible implementations based on principles of abstract algebra. Enjoy the mind-bend!:)
+
+Lets start the journey with a simple data constructor taking a single component and a welcoming component.
+#+BEGIN_SRC javascript
+const FComponent = daggy.tagged("FComponent", ['component']);
+
+const Greeting = name => ( 
+    <h1>Hello {name}</h1>
+);
+#+END_SRC
+
+And put Greeting in the box.
+
+#+BEGIN_SRC javascript
+const WrappedGreeting = FComponent(Greeting);
+#+END_SRC
+
+Greeting is now nicely wrapped. To get it back we can use the implicit getter ~.component~. To generalize the getter and to make it more explicit we might choose the alias ~.fold~ instead of component. 
+
+#+BEGIN_SRC javascript
+ComponentFactory.prototype.fold = function (state) {
+    return this.component(state);
+}
+#+END_SRC
+
+** Algebras
+   
+*** Functor
+
+One of the most comm data structures is the Functor. If you worked with an array before I congratulate you for already using it implicitly. As you probably know a Functor can be accessed using ~map~. Don't feel tempted to think of an unboxing operation! Map is shape preserving. Our component will be transformed, but stays in the box.
+
+#+BEGIN_SRC javascript
+// map :: Functor f => f a ~> (a -> b) -> f b
+
+FComponent.prototype.map = function(f) {
+    return FComponent(x => f(this.fold(x)));
+}
+#+END_SRC   
+
+~Map~ just wrappes the orginal component function into our mapping function. Big problems ahead: The mapping function must deal with an React object. So either our mapping function is a dedicated helper function made for dealing with Components as input (like in Redux), or we need an curried component introducing the concept of Higher Order Functions (HOFs):
+ 
+#+BEGIN_SRC javascript
+const CurriedGreeting = planet =>
+    name => (
+        <h1>Hello curried {planet, name}</h1>
+    );
+
+// Which can be mapped
+
+WrappedCurriedGreeting
+    .map(f => f("Earth"))
+    .fold("Planet")
+#+END_SRC
+
+With HOFs we can build wonderful components for example map some context before applying state and so on. The problem we are facing when using map is that map works "inside out" (name is resolved before planet). There is a little brother of map called contramap who can help us out:)
+
+*** Contravariant
+
+Contravariant flips the calling order of map. Lets see it in action
+
+#+BEGIN_SRC javascript
+// Back to normal greeting component
+const Greeting = name => ( 
+    <h1>Hello {name}</h1>
+);
+
+WrappedGreeting.
+   .contramap(x => x.planet)
+   .fold({planet: "earth"})
+#+END_SRC
+
+This time we got it right. Contramap works "outside in" so it will inject a funtion right before the fold kicks in.
+Contramap works great as filter for the state.
+
+Implementation:
+#+BEGIN_SRC javascript
+FComponent.prototype.contramap = function(f) {
+    return FComponent(x => this.fold(f(x)))
+};
+#+END_SRC
+
+*** Semigroup
+    
+
+
+
